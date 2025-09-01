@@ -1,10 +1,16 @@
-import express from "express";
+import express, {
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
+
+import { config } from "./config.js";
 
 const app = express();
 
 const PORT = process.env.PORT || 8080;
 
-app.use("/app", express.static("./src/app"));
+app.use("/app", middlewareMetricsInc, express.static("./src/app"));
 app.use(middlewareLogResponses);
 
 app.get("/healthz", (req, res) => {
@@ -13,14 +19,26 @@ app.get("/healthz", (req, res) => {
   res.send("OK");
 });
 
+app.get("/metrics", (req, res) => {
+  res.status(200);
+  res.set("Content-Type", "text/plain; charset=utf-8");
+  res.send(`Hits: ${config.fileserverHits}`);
+});
+
+app.get("/reset", (req, res) => {
+  config.fileserverHits = 0;
+
+  res.redirect("/metrics");
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
 });
 
 function middlewareLogResponses(
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction,
+  req: Request,
+  res: Response,
+  next: NextFunction,
 ) {
   res.on("finish", () => {
     if (res.statusCode !== 200) {
@@ -29,5 +47,10 @@ function middlewareLogResponses(
       );
     }
   });
+  next();
+}
+
+function middlewareMetricsInc(req: Request, res: Response, next: NextFunction) {
+  config.fileserverHits++;
   next();
 }

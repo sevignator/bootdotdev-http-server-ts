@@ -1,5 +1,0 @@
-
-> bootdotdev-http-server-ts@1.0.0 dev /Users/msevigny/Projects/github.com/sevignator/bootdotdev-http-server-ts
-> npx tsc && node dist/index.js
-
-Server is running at http://localhost:8080
