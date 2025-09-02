@@ -13,22 +13,22 @@ const PORT = process.env.PORT || 8080;
 app.use("/app", middlewareMetricsInc, express.static("./src/app"));
 app.use(middlewareLogResponses);
 
-app.get("/healthz", (req, res) => {
+app.get("/api/healthz", (req, res) => {
   res.status(200);
   res.set("Content-Type", "text/plain; charset=utf-8");
   res.send("OK");
 });
 
-app.get("/metrics", (req, res) => {
+app.get("/api/metrics", (req, res) => {
   res.status(200);
   res.set("Content-Type", "text/plain; charset=utf-8");
   res.send(`Hits: ${config.fileserverHits}`);
 });
 
-app.get("/reset", (req, res) => {
+app.get("/api/reset", (req, res) => {
   config.fileserverHits = 0;
 
-  res.redirect("/metrics");
+  res.redirect("/api/metrics");
 });
 
 app.listen(PORT, () => {
