@@ -38,22 +38,24 @@ app.post('/admin/reset', (req, res) => {
 });
 
 app.post('/api/validate_chirp', (req, res) => {
-  interface Params {
+  interface Data {
     body: string;
   }
 
   const MAX_LENGTH = 140;
+  const ILLEGAL_TERMS = ['kerfuffle', 'sharbert', 'fornax'];
+  const illegalTermsPattern = new RegExp(`(${ILLEGAL_TERMS.join('|')})`, 'gi');
 
   try {
-    const params: Params = req.body;
+    const data: Data = req.body;
 
-    if (params.body.length > MAX_LENGTH) {
+    if (data.body.length > MAX_LENGTH) {
       throw new Error('Chirp is too long');
     }
 
     res.status(200).send(
       JSON.stringify({
-        valid: true,
+        cleanedBody: data.body.replaceAll(illegalTermsPattern, '****'),
       })
     );
   } catch (error) {
