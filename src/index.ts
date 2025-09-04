@@ -10,8 +10,9 @@ const app = express();
 
 const PORT = process.env.PORT || 8080;
 
-app.use('/app', middlewareMetricsInc, express.static('./src/app'));
+app.use(express.json());
 app.use(middlewareLogResponses);
+app.use('/app', middlewareMetricsInc, express.static('./src/app'));
 
 app.get('/api/healthz', (req, res) => {
   res.status(200);
@@ -37,38 +38,61 @@ app.post('/admin/reset', (req, res) => {
 });
 
 app.post('/api/validate_chirp', (req, res) => {
+  interface Params {
+    body: string;
+  }
+
   const MAX_LENGTH = 140;
-  let body = '';
 
-  req.on('data', (chunk) => {
-    body += chunk;
-  });
+  try {
+    const params: Params = req.body;
 
-  req.on('end', () => {
-    try {
-      const parsedBody = JSON.parse(body);
-
-      if (!parsedBody.body) {
-        throw new Error('Something went wrong');
-      }
-
-      if (parsedBody.body.length > MAX_LENGTH) {
-        throw new Error('Chirp is too long');
-      }
-
-      res.status(200).send(
-        JSON.stringify({
-          valid: true,
-        })
-      );
-    } catch (error) {
-      res.status(400).send(
-        JSON.stringify({
-          error: error instanceof Error ? error.message : error,
-        })
-      );
+    if (params.body.length > MAX_LENGTH) {
+      throw new Error('Chirp is too long');
     }
-  });
+
+    res.status(200).send(
+      JSON.stringify({
+        valid: true,
+      })
+    );
+  } catch (error) {
+    res.status(400).send(
+      JSON.stringify({
+        error: error instanceof Error ? error.message : error,
+      })
+    );
+  }
+
+  // req.on('data', (chunk) => {
+  //   body += chunk;
+  // });
+
+  // req.on('end', () => {
+  //   try {
+  //     const parsedBody = JSON.parse(body);
+
+  //     if (!parsedBody.body) {
+  //       throw new Error('Something went wrong');
+  //     }
+
+  //     if (parsedBody.body.length > MAX_LENGTH) {
+  //       throw new Error('Chirp is too long');
+  //     }
+
+  //     res.status(200).send(
+  //       JSON.stringify({
+  //         valid: true,
+  //       })
+  //     );
+  //   } catch (error) {
+  //     res.status(400).send(
+  //       JSON.stringify({
+  //         error: error instanceof Error ? error.message : error,
+  //       })
+  //     );
+  //   }
+  // });
 });
 
 app.listen(PORT, () => {
