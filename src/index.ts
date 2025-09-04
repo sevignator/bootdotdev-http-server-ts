@@ -30,7 +30,7 @@ app.get('/admin/metrics', (req, res) => {
   </html>`);
 });
 
-app.get('/admin/reset', (req, res) => {
+app.post('/admin/reset', (req, res) => {
   config.fileserverHits = 0;
 
   res.redirect('/admin/metrics');
