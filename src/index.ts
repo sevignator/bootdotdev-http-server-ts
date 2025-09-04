@@ -63,36 +63,6 @@ app.post('/api/validate_chirp', (req, res) => {
       })
     );
   }
-
-  // req.on('data', (chunk) => {
-  //   body += chunk;
-  // });
-
-  // req.on('end', () => {
-  //   try {
-  //     const parsedBody = JSON.parse(body);
-
-  //     if (!parsedBody.body) {
-  //       throw new Error('Something went wrong');
-  //     }
-
-  //     if (parsedBody.body.length > MAX_LENGTH) {
-  //       throw new Error('Chirp is too long');
-  //     }
-
-  //     res.status(200).send(
-  //       JSON.stringify({
-  //         valid: true,
-  //       })
-  //     );
-  //   } catch (error) {
-  //     res.status(400).send(
-  //       JSON.stringify({
-  //         error: error instanceof Error ? error.message : error,
-  //       })
-  //     );
-  //   }
-  // });
 });
 
 app.listen(PORT, () => {
