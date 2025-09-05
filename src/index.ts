@@ -5,6 +5,7 @@ import express, {
 } from 'express';
 
 import { config } from './config.js';
+import { BadRequestError } from './app/utils/errors.js';
 
 const app = express();
 
@@ -49,7 +50,7 @@ app.post('/api/validate_chirp', (req, res) => {
   const data: Data = req.body;
 
   if (data.body.length > MAX_LENGTH) {
-    throw new Error('Chirp is too long');
+    throw new BadRequestError(`Chirp is too long. Max length is ${MAX_LENGTH}`);
   }
 
   res.status(200).send(
@@ -62,6 +63,11 @@ app.post('/api/validate_chirp', (req, res) => {
 // Error-handling middleware, which must be place after other middleware and
 // route handlers.
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof BadRequestError) {
+    res.status(400).json({
+      error: err.message,
+    });
+  }
   res.status(500).json({
     error: 'Something went wrong on our end',
   });
