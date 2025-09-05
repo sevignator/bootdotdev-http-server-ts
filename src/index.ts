@@ -46,25 +46,25 @@ app.post('/api/validate_chirp', (req, res) => {
   const ILLEGAL_TERMS = ['kerfuffle', 'sharbert', 'fornax'];
   const illegalTermsPattern = new RegExp(`(${ILLEGAL_TERMS.join('|')})`, 'gi');
 
-  try {
-    const data: Data = req.body;
+  const data: Data = req.body;
 
-    if (data.body.length > MAX_LENGTH) {
-      throw new Error('Chirp is too long');
-    }
-
-    res.status(200).send(
-      JSON.stringify({
-        cleanedBody: data.body.replaceAll(illegalTermsPattern, '****'),
-      })
-    );
-  } catch (error) {
-    res.status(400).send(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : error,
-      })
-    );
+  if (data.body.length > MAX_LENGTH) {
+    throw new Error('Chirp is too long');
   }
+
+  res.status(200).send(
+    JSON.stringify({
+      cleanedBody: data.body.replaceAll(illegalTermsPattern, '****'),
+    })
+  );
+});
+
+// Error-handling middleware, which must be place after other middleware and
+// route handlers.
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  res.status(500).json({
+    error: 'Something went wrong on our end',
+  });
 });
 
 app.listen(PORT, () => {
