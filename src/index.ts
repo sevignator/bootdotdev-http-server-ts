@@ -5,7 +5,10 @@ import express, {
 } from 'express';
 
 import { config } from './config.js';
+import { migrateDb } from './db/migration.js';
 import { BadRequestError } from './app/utils/errors.js';
+
+await migrateDb();
 
 const app = express();
 
@@ -27,13 +30,13 @@ app.get('/admin/metrics', (req, res) => {
   res.send(`<html>
     <body>
       <h1>Welcome, Chirpy Admin</h1>
-      <p>Chirpy has been visited ${config.fileserverHits} times!</p>
+      <p>Chirpy has been visited ${config.api.fileserverHits} times!</p>
     </body>
   </html>`);
 });
 
 app.post('/admin/reset', (req, res) => {
-  config.fileserverHits = 0;
+  config.api.fileserverHits = 0;
 
   res.redirect('/admin/metrics');
 });
@@ -93,6 +96,6 @@ function middlewareLogResponses(
 }
 
 function middlewareMetricsInc(req: Request, res: Response, next: NextFunction) {
-  config.fileserverHits++;
+  config.api.fileserverHits++;
   next();
 }
