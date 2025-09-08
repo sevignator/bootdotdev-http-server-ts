@@ -2,22 +2,30 @@ import { type MigrationConfig } from 'drizzle-orm/migrator';
 
 process.loadEnvFile();
 
+if (!process.env.PLATFORM) {
+  throw new Error(
+    'Please provide a `PLATFORM` value of either "dev" or "prod".'
+  );
+}
+
 if (!process.env.DB_URL) {
   throw new Error('Please add a `DB_URL` value to your .env file.');
 }
 
 type Config = {
   api: {
+    platform: typeof process.env.PLATFORM;
     fileserverHits: number;
   };
   db: {
-    url: string;
+    url: typeof process.env.DB_URL;
     migrationConfig: MigrationConfig;
   };
 };
 
 export const config: Config = {
   api: {
+    platform: process.env.PLATFORM,
     fileserverHits: 0,
   },
   db: {
