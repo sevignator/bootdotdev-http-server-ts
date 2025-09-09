@@ -9,7 +9,7 @@ import {
 } from './app/middleware.js';
 import { createUser, deleteAllUsers } from './db/queries/users.js';
 import { BadRequestError, ForbiddenError } from './app/utils/errors.js';
-import { createChirp } from './db/queries/chirps.js';
+import { createChirp, getAllChirps } from './db/queries/chirps.js';
 
 await migrateDb();
 
@@ -34,6 +34,12 @@ app.post('/api/users', async (req, res) => {
   });
 
   res.status(201).json(user);
+});
+
+app.get('/api/chirps', async (req, res) => {
+  const chirps = await getAllChirps();
+
+  res.status(200).json(chirps);
 });
 
 app.post('/api/chirps', async (req, res) => {
