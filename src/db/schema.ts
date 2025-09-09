@@ -1,4 +1,8 @@
-import { timestamp, varchar, uuid, pgTable } from 'drizzle-orm/pg-core';
+import { foreignKey } from 'drizzle-orm/gel-core';
+import { timestamp, varchar, uuid, pgTable, text } from 'drizzle-orm/pg-core';
+
+export type NewUser = typeof users.$inferInsert;
+export type NewChirp = typeof chirps.$inferInsert;
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -10,4 +14,15 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 256 }).unique().notNull(),
 });
 
-export type NewUser = typeof users.$inferInsert;
+export const chirps = pgTable('chirps', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+  body: text('body').notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+});

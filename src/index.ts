@@ -9,6 +9,7 @@ import {
 } from './app/middleware.js';
 import { createUser, deleteAllUsers } from './db/queries/users.js';
 import { BadRequestError, ForbiddenError } from './app/utils/errors.js';
+import { createChirp } from './db/queries/chirps.js';
 
 await migrateDb();
 
@@ -28,33 +29,32 @@ app.post('/api/users', async (req, res) => {
     throw new BadRequestError('Please provide a valid user email.');
   }
 
-  const { id, createdAt, updatedAt, email } = await createUser({
+  const user = await createUser({
     email: data.email,
   });
 
-  res.status(201).json({
-    id,
-    createdAt,
-    updatedAt,
-    email,
-  });
+  res.status(201).json(user);
 });
 
-app.get('/api/healthz', (req, res) => {
-  res.status(200);
-  res.set('Content-Type', 'text/plain; charset=utf-8');
-  res.send('OK');
-});
+app.post('/api/chirps', async (req, res) => {
+  const MAX_LENGTH = 140;
+  const ILLEGAL_TERMS = ['kerfuffle', 'sharbert', 'fornax'];
+  const illegalTermsPattern = new RegExp(`(${ILLEGAL_TERMS.join('|')})`, 'gi');
+  const data: {
+    body: string;
+    userId: string;
+  } = req.body;
 
-app.get('/admin/metrics', (req, res) => {
-  res.status(200);
-  res.set('Content-Type', 'text/html; charset=utf-8');
-  res.send(`<html>
-    <body>
-      <h1>Welcome, Chirpy Admin</h1>
-      <p>Chirpy has been visited ${config.api.fileserverHits} times!</p>
-    </body>
-  </html>`);
+  if (data.body.length > MAX_LENGTH) {
+    throw new BadRequestError(`Chirp is too long. Max length is ${MAX_LENGTH}`);
+  }
+
+  const chirp = await createChirp(
+    data.body.replaceAll(illegalTermsPattern, '****'),
+    data.userId
+  );
+
+  res.status(201).json(chirp);
 });
 
 app.post('/admin/reset', async (req, res) => {
@@ -69,24 +69,21 @@ app.post('/admin/reset', async (req, res) => {
   res.redirect('/admin/metrics');
 });
 
-app.post('/api/validate_chirp', (req, res) => {
-  const MAX_LENGTH = 140;
-  const ILLEGAL_TERMS = ['kerfuffle', 'sharbert', 'fornax'];
-  const illegalTermsPattern = new RegExp(`(${ILLEGAL_TERMS.join('|')})`, 'gi');
+app.get('/admin/metrics', (req, res) => {
+  res.status(200);
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<html>
+    <body>
+      <h1>Welcome, Chirpy Admin</h1>
+      <p>Chirpy has been visited ${config.api.fileserverHits} times!</p>
+    </body>
+  </html>`);
+});
 
-  const data: {
-    body: string;
-  } = req.body;
-
-  if (data.body.length > MAX_LENGTH) {
-    throw new BadRequestError(`Chirp is too long. Max length is ${MAX_LENGTH}`);
-  }
-
-  res.status(200).send(
-    JSON.stringify({
-      cleanedBody: data.body.replaceAll(illegalTermsPattern, '****'),
-    })
-  );
+app.get('/api/healthz', (req, res) => {
+  res.status(200);
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.send('OK');
 });
 
 // Error-handling middleware must be place after other middleware and routes.
