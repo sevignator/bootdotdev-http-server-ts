@@ -14,12 +14,14 @@
   "license": "ISC",
   "packageManager": "pnpm@9.1.2+sha256.19c17528f9ca20bd442e4ca42f00f1b9808a9cb419383cd04ba32ef19322aba7",
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.0",
     "drizzle-kit": "^0.31.4",
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "drizzle-orm": "^0.44.5",
     "express": "^5.1.0",
     "postgres": "^3.4.7"

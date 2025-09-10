@@ -5,6 +5,7 @@ import {
   BadRequestError,
   ForbiddenError,
   NotFoundError,
+  UnauthorizedError,
 } from '../app/utils/errors.js';
 
 export function middlewareLogResponses(
@@ -39,6 +40,11 @@ export function middlewareHandleErrors(
 ) {
   if (err instanceof BadRequestError) {
     res.status(400).json({
+      error: err.message,
+    });
+  }
+  if (err instanceof UnauthorizedError) {
+    res.status(401).json({
       error: err.message,
     });
   }

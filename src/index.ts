@@ -7,13 +7,19 @@ import {
   middlewareLogResponses,
   middlewareMetricsInc,
 } from './app/middleware.js';
-import { createUser, deleteAllUsers } from './db/queries/users.js';
+import {
+  createUser,
+  deleteAllUsers,
+  getUserByEmail,
+} from './db/queries/users.js';
 import {
   BadRequestError,
   ForbiddenError,
   NotFoundError,
+  UnauthorizedError,
 } from './app/utils/errors.js';
 import { createChirp, getAllChirps, getChirp } from './db/queries/chirps.js';
+import { hashPassword, checkPasswordHash } from './auth.js';
 
 await migrateDb();
 
@@ -26,18 +32,65 @@ app.use('/app', middlewareMetricsInc, express.static('./src/app'));
 
 app.post('/api/users', async (req, res) => {
   const data: {
+    password: string;
     email: string;
   } = req.body;
 
-  if (!data.email) {
-    throw new BadRequestError('Please provide a valid user email.');
+  if (!data.password) {
+    throw new BadRequestError('Please provide a valid password.');
   }
 
+  if (!data.email) {
+    throw new BadRequestError('Please provide a valid email address.');
+  }
+
+  const { email, password } = data;
+
   const user = await createUser({
-    email: data.email,
+    hashedPassword: await hashPassword(password),
+    email,
   });
 
-  res.status(201).json(user);
+  const { hashedPassword, ...cleanUser } = user;
+
+  res.status(201).json(cleanUser);
+});
+
+app.post('/api/login', async (req, res) => {
+  const data: {
+    password: string;
+    email: string;
+  } = req.body;
+
+  if (!data.password) {
+    throw new BadRequestError('Please provide a valid password.');
+  }
+
+  if (!data.email) {
+    throw new BadRequestError('Please provide a valid email address.');
+  }
+
+  try {
+    const user = await getUserByEmail(data.email);
+    const hashedBodyPassword = await hashPassword(data.password);
+
+    const emailIsMatching = await checkPasswordHash(
+      hashedBodyPassword,
+      user.hashedPassword
+    );
+
+    if (!emailIsMatching) {
+      throw new Error();
+    }
+
+    const { hashedPassword, ...cleanUser } = user;
+
+    res.status(200).json(cleanUser);
+  } catch {
+    throw new UnauthorizedError(
+      'You are not authorized to access this resource.'
+    );
+  }
 });
 
 app.get('/api/chirps', async (req, res) => {
