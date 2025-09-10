@@ -1,8 +1,9 @@
-import { foreignKey } from 'drizzle-orm/gel-core';
 import { timestamp, varchar, uuid, pgTable, text } from 'drizzle-orm/pg-core';
 
 export type NewUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
 export type NewChirp = typeof chirps.$inferInsert;
+export type Chirp = typeof chirps.$inferSelect;
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),

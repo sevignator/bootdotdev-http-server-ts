@@ -8,8 +8,12 @@ import {
   middlewareMetricsInc,
 } from './app/middleware.js';
 import { createUser, deleteAllUsers } from './db/queries/users.js';
-import { BadRequestError, ForbiddenError } from './app/utils/errors.js';
-import { createChirp, getAllChirps } from './db/queries/chirps.js';
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+} from './app/utils/errors.js';
+import { createChirp, getAllChirps, getChirp } from './db/queries/chirps.js';
 
 await migrateDb();
 
@@ -40,6 +44,20 @@ app.get('/api/chirps', async (req, res) => {
   const chirps = await getAllChirps();
 
   res.status(200).json(chirps);
+});
+
+app.get('/api/chirps/:chirpId', async (req, res) => {
+  const chirpId = req.params.chirpId;
+
+  try {
+    const chirp = await getChirp(chirpId);
+
+    res.status(200).json(chirp);
+  } catch {
+    throw new NotFoundError(
+      `A chirp with the ID "${chirpId}" could not be found.`
+    );
+  }
 });
 
 app.post('/api/chirps', async (req, res) => {

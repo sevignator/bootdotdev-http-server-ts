@@ -1,7 +1,11 @@
 import { type Request, type Response, type NextFunction } from 'express';
 
 import { config } from '../config.js';
-import { BadRequestError, ForbiddenError } from '../app/utils/errors.js';
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+} from '../app/utils/errors.js';
 
 export function middlewareLogResponses(
   req: Request,
@@ -40,6 +44,11 @@ export function middlewareHandleErrors(
   }
   if (err instanceof ForbiddenError) {
     res.status(403).json({
+      error: err.message,
+    });
+  }
+  if (err instanceof NotFoundError) {
+    res.status(404).json({
       error: err.message,
     });
   }
