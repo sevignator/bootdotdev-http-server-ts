@@ -15,6 +15,13 @@
       "when": 1757379802371,
       "tag": "0001_solid_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1757534102389,
+      "tag": "0002_whole_enchantress",
+      "breakpoints": true
     }
   ]
 }

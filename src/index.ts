@@ -72,14 +72,13 @@ app.post('/api/login', async (req, res) => {
 
   try {
     const user = await getUserByEmail(data.email);
-    const hashedBodyPassword = await hashPassword(data.password);
 
-    const emailIsMatching = await checkPasswordHash(
-      hashedBodyPassword,
+    const passwordIsMatching = await checkPasswordHash(
+      data.password,
       user.hashedPassword
     );
 
-    if (!emailIsMatching) {
+    if (!passwordIsMatching) {
       throw new Error();
     }
 
