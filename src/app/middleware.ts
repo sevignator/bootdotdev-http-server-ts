@@ -38,27 +38,28 @@ export function middlewareHandleErrors(
   res: Response,
   next: NextFunction
 ) {
-  if (err instanceof BadRequestError) {
-    res.status(400).json({
-      error: err.message,
-    });
+  let statusCode: number;
+  let errorMessage = err.message;
+
+  switch (true) {
+    case err instanceof BadRequestError:
+      statusCode = 400;
+      break;
+    case err instanceof UnauthorizedError:
+      statusCode = 401;
+      break;
+    case err instanceof ForbiddenError:
+      statusCode = 403;
+      break;
+    case err instanceof NotFoundError:
+      statusCode = 404;
+      break;
+    default:
+      statusCode = 500;
+      errorMessage = 'Something went wrong on our end';
   }
-  if (err instanceof UnauthorizedError) {
-    res.status(401).json({
-      error: err.message,
-    });
-  }
-  if (err instanceof ForbiddenError) {
-    res.status(403).json({
-      error: err.message,
-    });
-  }
-  if (err instanceof NotFoundError) {
-    res.status(404).json({
-      error: err.message,
-    });
-  }
-  res.status(500).json({
-    error: 'Something went wrong on our end',
+
+  res.status(statusCode).json({
+    error: errorMessage,
   });
 }
