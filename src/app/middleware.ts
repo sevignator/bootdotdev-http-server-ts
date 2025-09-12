@@ -6,7 +6,7 @@ import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
-} from '../app/utils/errors.js';
+} from './errors.js';
 
 export function middlewareLogResponses(
   req: Request,

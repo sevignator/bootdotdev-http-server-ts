@@ -17,9 +17,9 @@ import {
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
-} from './app/utils/errors.js';
+} from './app/errors.js';
 import { createChirp, getAllChirps, getChirp } from './db/queries/chirps.js';
-import { hashPassword, checkPasswordHash } from './auth.js';
+import { hashPassword, checkPasswordHash } from './app/auth.js';
 
 await migrateDb();
 
