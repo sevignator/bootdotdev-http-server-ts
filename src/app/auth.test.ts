@@ -5,6 +5,7 @@ import {
   makeJWT,
   validateJWT,
 } from './auth.js';
+import { config } from '../config.js';
 
 describe('Password Hashing', () => {
   const password1 = 'correctPassword123!';
@@ -26,9 +27,8 @@ describe('Password Hashing', () => {
 describe('Generating a JWT', () => {
   it('should validate a tokenized user ID', () => {
     const userId = 'MonstaHunta';
-    const secret = 'SecretMission';
-    const token = makeJWT(userId, 1000, secret);
-    const result = validateJWT(token, secret);
+    const token = makeJWT(userId, 1000, config.api.jwtSecret);
+    const result = validateJWT(token, config.api.jwtSecret);
 
     expect(result).toBe(userId);
   });
