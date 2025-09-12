@@ -24,11 +24,11 @@ describe('Password Hashing', () => {
 });
 
 describe('Generating a JWT', () => {
-  it('should return a hashed user ID', () => {
+  it('should validate a tokenized user ID', () => {
     const userId = 'MonstaHunta';
     const secret = 'SecretMission';
-    const hash = makeJWT(userId, 1000, secret);
-    const result = validateJWT(hash, secret);
+    const token = makeJWT(userId, 1000, secret);
+    const result = validateJWT(token, secret);
 
     expect(result).toBe(userId);
   });
