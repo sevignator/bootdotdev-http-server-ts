@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { type Request } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -57,4 +58,10 @@ export function getBearerToken(req: Request): string {
   }
 
   return authToken?.replace('Bearer', '').trim();
+}
+
+export function makeRefreshToken() {
+  const token = randomBytes(32).toString('hex');
+
+  return token;
 }
