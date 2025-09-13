@@ -19,7 +19,13 @@ import {
   UnauthorizedError,
 } from './app/errors.js';
 import { createChirp, getAllChirps, getChirp } from './db/queries/chirps.js';
-import { hashPassword, checkPasswordHash } from './app/auth.js';
+import {
+  hashPassword,
+  checkPasswordHash,
+  getBearerToken,
+  makeJWT,
+  validateJWT,
+} from './app/auth.js';
 
 await migrateDb();
 
@@ -60,6 +66,7 @@ app.post('/api/login', async (req, res) => {
   const data: {
     password: string;
     email: string;
+    expiresInSeconds: number;
   } = req.body;
 
   if (!data.password) {
@@ -72,6 +79,11 @@ app.post('/api/login', async (req, res) => {
 
   try {
     const user = await getUserByEmail(data.email);
+    const token = makeJWT(
+      user.id,
+      data?.expiresInSeconds ?? 3600,
+      config.api.jwtSecret
+    );
 
     const passwordIsMatching = await checkPasswordHash(
       data.password,
@@ -83,8 +95,14 @@ app.post('/api/login', async (req, res) => {
     }
 
     const { hashedPassword, ...cleanUser } = user;
+    const body = {
+      ...cleanUser,
+      token,
+    };
 
-    res.status(200).json(cleanUser);
+    console.log(body);
+
+    res.status(200).json(body);
   } catch {
     throw new UnauthorizedError(
       'You are not authorized to access this resource.'
@@ -96,6 +114,29 @@ app.get('/api/chirps', async (req, res) => {
   const chirps = await getAllChirps();
 
   res.status(200).json(chirps);
+});
+
+app.post('/api/chirps', async (req, res) => {
+  const MAX_LENGTH = 140;
+  const ILLEGAL_TERMS = ['kerfuffle', 'sharbert', 'fornax'];
+  const illegalTermsPattern = new RegExp(`(${ILLEGAL_TERMS.join('|')})`, 'gi');
+  const data: {
+    body: string;
+  } = req.body;
+
+  const token = getBearerToken(req);
+  const userId = validateJWT(token, config.api.jwtSecret);
+
+  if (data.body.length > MAX_LENGTH) {
+    throw new BadRequestError(`Chirp is too long. Max length is ${MAX_LENGTH}`);
+  }
+
+  const chirp = await createChirp(
+    data.body.replaceAll(illegalTermsPattern, '****'),
+    userId
+  );
+
+  res.status(201).json(chirp);
 });
 
 app.get('/api/chirps/:chirpId', async (req, res) => {
@@ -110,27 +151,6 @@ app.get('/api/chirps/:chirpId', async (req, res) => {
       `A chirp with the ID "${chirpId}" could not be found.`
     );
   }
-});
-
-app.post('/api/chirps', async (req, res) => {
-  const MAX_LENGTH = 140;
-  const ILLEGAL_TERMS = ['kerfuffle', 'sharbert', 'fornax'];
-  const illegalTermsPattern = new RegExp(`(${ILLEGAL_TERMS.join('|')})`, 'gi');
-  const data: {
-    body: string;
-    userId: string;
-  } = req.body;
-
-  if (data.body.length > MAX_LENGTH) {
-    throw new BadRequestError(`Chirp is too long. Max length is ${MAX_LENGTH}`);
-  }
-
-  const chirp = await createChirp(
-    data.body.replaceAll(illegalTermsPattern, '****'),
-    data.userId
-  );
-
-  res.status(201).json(chirp);
 });
 
 app.post('/admin/reset', async (req, res) => {
