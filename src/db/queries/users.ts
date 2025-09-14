@@ -1,7 +1,12 @@
 import { eq } from 'drizzle-orm';
 
 import { db } from '../index.js';
-import { type NewUser, type User, users } from '../schema.js';
+import {
+  type NewUser,
+  type RefreshToken,
+  type User,
+  users,
+} from '../schema.js';
 
 export async function createUser(user: NewUser) {
   const [result] = await db
@@ -25,6 +30,17 @@ export async function getUserById(id: User['id']) {
 
 export async function getUserByEmail(email: User['email']) {
   const [result] = await db.select().from(users).where(eq(users.email, email));
+
+  return result;
+}
+
+export async function getUserFromRefreshToken(
+  token: RefreshToken
+): Promise<User> {
+  const [result] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, token.userId));
 
   return result;
 }

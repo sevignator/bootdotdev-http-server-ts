@@ -85,7 +85,7 @@ app.post('/api/login', async (req, res) => {
 
   try {
     const user = await getUserByEmail(data.email);
-    const token = makeJWT(user.id, config.api.jwtSecret);
+    const accessToken = makeJWT(user.id, config.api.jwtSecret);
     const refreshTokenRecord = await makeRefreshToken(user.id);
 
     const passwordIsMatching = await checkPasswordHash(
@@ -100,7 +100,7 @@ app.post('/api/login', async (req, res) => {
     const { hashedPassword, ...cleanUser } = user;
     const body = {
       ...cleanUser,
-      token,
+      token: accessToken,
       refreshToken: refreshTokenRecord.token,
     };
 
@@ -110,6 +110,56 @@ app.post('/api/login', async (req, res) => {
       'You are not authorized to access this resource.'
     );
   }
+});
+
+app.post('/api/refresh', async (req, res) => {
+  const refreshToken = getBearerToken(req);
+
+  // Throw and exception if the `Authorization` header doesn't contain a refresh token.
+  if (!refreshToken) {
+    throw new UnauthorizedError(
+      'A refresh token must be provided with this request.'
+    );
+  }
+
+  const today = new Date();
+  const refreshTokenRecord = await getRefreshToken(refreshToken);
+
+  // Throw an exception if the token is either expired or has been revoked.
+  if (today > refreshTokenRecord.expiresAt || refreshTokenRecord.revokedAt) {
+    throw new UnauthorizedError('The refresh token is no longer valid.');
+  }
+
+  // Generate a new refresh token for the current user.
+  const user = await getUserById(refreshTokenRecord.userId);
+  const newAccessToken = await makeJWT(user.id, config.api.jwtSecret);
+
+  // Return the newly generated refresh token.
+  res.status(200).json({
+    token: newAccessToken,
+  });
+});
+
+app.post('/api/revoke', async (req, res) => {
+  const refreshToken = getBearerToken(req);
+
+  // Throw and exception if the `Authorization` header doesn't contain a refresh token.
+  if (!refreshToken) {
+    throw new UnauthorizedError(
+      'A refresh token must be provided with this request.'
+    );
+  }
+
+  // Revoke the refresh token that matches the one from the `Authorization` header.
+  await revokeRefreshToken(refreshToken);
+
+  res.status(204).end();
+});
+
+app.get('/api/healthz', (req, res) => {
+  res.status(200);
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.send('OK');
 });
 
 app.get('/api/chirps', async (req, res) => {
@@ -153,56 +203,6 @@ app.get('/api/chirps/:chirpId', async (req, res) => {
       `A chirp with the ID "${chirpId}" could not be found.`
     );
   }
-});
-
-app.post('/api/refresh', async (req, res) => {
-  const refreshToken = getBearerToken(req);
-
-  // Throw and exception if the `Authorization` header doesn't contain a refresh token.
-  if (!refreshToken) {
-    throw new UnauthorizedError(
-      'A refresh token must be provided with this request.'
-    );
-  }
-
-  const today = new Date();
-  const refreshTokenRecord = await getRefreshToken(refreshToken);
-
-  // Throw an exception if the token is either expired or has been revoked.
-  if (today > refreshTokenRecord.expiresAt || refreshTokenRecord.revokedAt) {
-    throw new UnauthorizedError('The refresh token is no longer valid.');
-  }
-
-  // Generate a new refresh token for the current user.
-  const user = await getUserById(refreshTokenRecord.userId);
-  const newRefreshToken = await createRefreshToken(user.id);
-
-  // Return the newly generated refresh token.
-  res.status(200).json({
-    token: newRefreshToken,
-  });
-});
-
-app.post('/api/revoke', async (req, res) => {
-  const refreshToken = getBearerToken(req);
-
-  // Throw and exception if the `Authorization` header doesn't contain a refresh token.
-  if (!refreshToken) {
-    throw new UnauthorizedError(
-      'A refresh token must be provided with this request.'
-    );
-  }
-
-  // Revoke the refresh token that matches the one from the `Authorization` header.
-  await revokeRefreshToken(refreshToken);
-
-  res.status(204).end();
-});
-
-app.get('/api/healthz', (req, res) => {
-  res.status(200);
-  res.set('Content-Type', 'text/plain; charset=utf-8');
-  res.send('OK');
 });
 
 app.post('/admin/reset', async (req, res) => {
