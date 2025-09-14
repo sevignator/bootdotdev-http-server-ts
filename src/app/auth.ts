@@ -1,10 +1,10 @@
-import { randomBytes } from 'node:crypto';
 import { type Request } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import { type User } from '../db/schema.js';
 import { UnauthorizedError } from './errors.js';
+import { createRefreshToken } from '../db/queries/refreshTokens.js';
 
 const saltRounds = 10;
 
@@ -19,12 +19,9 @@ export async function checkPasswordHash(
   return bcrypt.compare(password, hash);
 }
 
-export function makeJWT(
-  userId: User['id'],
-  expiresIn: number,
-  secret: string
-): string {
+export function makeJWT(userId: User['id'], secret: string): string {
   const iat = Math.floor(Date.now() / 1000);
+  const expiresIn = 3600;
 
   const payload: Pick<jwt.JwtPayload, 'iss' | 'sub' | 'iat' | 'exp'> = {
     iss: 'chirpy',
@@ -60,8 +57,8 @@ export function getBearerToken(req: Request): string {
   return authToken?.replace('Bearer', '').trim();
 }
 
-export function makeRefreshToken() {
-  const token = randomBytes(32).toString('hex');
+export async function makeRefreshToken(userId: User['id']) {
+  const token = await createRefreshToken(userId);
 
   return token;
 }

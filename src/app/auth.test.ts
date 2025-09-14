@@ -27,7 +27,7 @@ describe('Password Hashing', () => {
 describe('Generating a JWT', () => {
   it('should validate a tokenized user ID', () => {
     const userId = 'MonstaHunta';
-    const token = makeJWT(userId, 1000, config.api.jwtSecret);
+    const token = makeJWT(userId, config.api.jwtSecret);
     const result = validateJWT(token, config.api.jwtSecret);
 
     expect(result).toBe(userId);

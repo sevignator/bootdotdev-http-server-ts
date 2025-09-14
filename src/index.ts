@@ -11,6 +11,7 @@ import {
   createUser,
   deleteAllUsers,
   getUserByEmail,
+  getUserById,
 } from './db/queries/users.js';
 import {
   BadRequestError,
@@ -25,7 +26,13 @@ import {
   getBearerToken,
   makeJWT,
   validateJWT,
+  makeRefreshToken,
 } from './app/auth.js';
+import {
+  createRefreshToken,
+  getRefreshToken,
+  revokeRefreshToken,
+} from './db/queries/refreshTokens.js';
 
 await migrateDb();
 
@@ -66,7 +73,6 @@ app.post('/api/login', async (req, res) => {
   const data: {
     password: string;
     email: string;
-    expiresInSeconds: number;
   } = req.body;
 
   if (!data.password) {
@@ -79,11 +85,8 @@ app.post('/api/login', async (req, res) => {
 
   try {
     const user = await getUserByEmail(data.email);
-    const token = makeJWT(
-      user.id,
-      data?.expiresInSeconds ?? 3600,
-      config.api.jwtSecret
-    );
+    const token = makeJWT(user.id, config.api.jwtSecret);
+    const refreshTokenRecord = await makeRefreshToken(user.id);
 
     const passwordIsMatching = await checkPasswordHash(
       data.password,
@@ -98,9 +101,8 @@ app.post('/api/login', async (req, res) => {
     const body = {
       ...cleanUser,
       token,
+      refreshToken: refreshTokenRecord.token,
     };
-
-    console.log(body);
 
     res.status(200).json(body);
   } catch {
@@ -153,6 +155,56 @@ app.get('/api/chirps/:chirpId', async (req, res) => {
   }
 });
 
+app.post('/api/refresh', async (req, res) => {
+  const refreshToken = getBearerToken(req);
+
+  // Throw and exception if the `Authorization` header doesn't contain a refresh token.
+  if (!refreshToken) {
+    throw new UnauthorizedError(
+      'A refresh token must be provided with this request.'
+    );
+  }
+
+  const today = new Date();
+  const refreshTokenRecord = await getRefreshToken(refreshToken);
+
+  // Throw an exception if the token is either expired or has been revoked.
+  if (today > refreshTokenRecord.expiresAt || refreshTokenRecord.revokedAt) {
+    throw new UnauthorizedError('The refresh token is no longer valid.');
+  }
+
+  // Generate a new refresh token for the current user.
+  const user = await getUserById(refreshTokenRecord.userId);
+  const newRefreshToken = await createRefreshToken(user.id);
+
+  // Return the newly generated refresh token.
+  res.status(200).json({
+    token: newRefreshToken,
+  });
+});
+
+app.post('/api/revoke', async (req, res) => {
+  const refreshToken = getBearerToken(req);
+
+  // Throw and exception if the `Authorization` header doesn't contain a refresh token.
+  if (!refreshToken) {
+    throw new UnauthorizedError(
+      'A refresh token must be provided with this request.'
+    );
+  }
+
+  // Revoke the refresh token that matches the one from the `Authorization` header.
+  await revokeRefreshToken(refreshToken);
+
+  res.status(204).end();
+});
+
+app.get('/api/healthz', (req, res) => {
+  res.status(200);
+  res.set('Content-Type', 'text/plain; charset=utf-8');
+  res.send('OK');
+});
+
 app.post('/admin/reset', async (req, res) => {
   if (config.api.platform !== 'dev') {
     throw new ForbiddenError('This endpoint is forbidden');
@@ -174,12 +226,6 @@ app.get('/admin/metrics', (req, res) => {
       <p>Chirpy has been visited ${config.api.fileserverHits} times!</p>
     </body>
   </html>`);
-});
-
-app.get('/api/healthz', (req, res) => {
-  res.status(200);
-  res.set('Content-Type', 'text/plain; charset=utf-8');
-  res.send('OK');
 });
 
 // Error-handling middleware must be place after other middleware and routes.
