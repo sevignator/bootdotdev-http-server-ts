@@ -5,6 +5,8 @@ import {
   createUser,
   getUserByEmail,
   getUserById,
+  updateUserEmail,
+  updateUserPassword,
 } from '../db/queries/users.js';
 import {
   BadRequestError,
@@ -24,9 +26,11 @@ import {
   getRefreshToken,
   revokeRefreshToken,
 } from '../db/queries/refreshTokens.js';
+import { type User } from '../db/schema.js';
 
 const router = Router();
 
+// For creating a new user.
 router.post('/users', async (req, res) => {
   const data: {
     password: string;
@@ -53,6 +57,24 @@ router.post('/users', async (req, res) => {
   res.status(201).json(cleanUser);
 });
 
+// For updating a user's password and/or email address.
+router.put('/users', async (req, res) => {
+  const data: {
+    password: string;
+    email: User['email'];
+  } = req.body;
+
+  const token = getBearerToken(req);
+  const userId = validateJWT(token, config.api.jwtSecret);
+  const user = await getUserById(userId);
+
+  await updateUserPassword(user.id, data.password);
+  const updatedUser = await updateUserEmail(user.id, data.email);
+
+  res.status(200).json(updatedUser);
+});
+
+// For logging in as a given user based on the provided email and password.
 router.post('/login', async (req, res) => {
   const data: {
     password: string;
@@ -96,6 +118,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// For generating a refresh token.
 router.post('/refresh', async (req, res) => {
   const refreshToken = getBearerToken(req);
 
@@ -124,6 +147,7 @@ router.post('/refresh', async (req, res) => {
   });
 });
 
+// For revoking a refresh token.
 router.post('/revoke', async (req, res) => {
   const refreshToken = getBearerToken(req);
 
@@ -140,6 +164,7 @@ router.post('/revoke', async (req, res) => {
   res.status(204).end();
 });
 
+// For health-checking the API.
 router.get('/healthz', (req, res) => {
   res.status(200);
   res.set('Content-Type', 'text/plain; charset=utf-8');
@@ -152,6 +177,7 @@ router.get('/chirps', async (req, res) => {
   res.status(200).json(chirps);
 });
 
+// For posting new chirps as an authenticated user.
 router.post('/chirps', async (req, res) => {
   const MAX_LENGTH = 140;
   const ILLEGAL_TERMS = ['kerfuffle', 'sharbert', 'fornax'];
@@ -175,6 +201,7 @@ router.post('/chirps', async (req, res) => {
   res.status(201).json(chirp);
 });
 
+// For reading the content of a specific chirp.
 router.get('/chirps/:chirpId', async (req, res) => {
   const chirpId = req.params.chirpId;
 

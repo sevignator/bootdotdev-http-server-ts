@@ -7,7 +7,12 @@ import {
   type User,
   users,
 } from '../schema.js';
+import { hashPassword } from '../../app/auth.js';
 
+/**
+ * @description
+ * For creating a new user record in the database.
+ */
 export async function createUser(user: NewUser) {
   const [result] = await db
     .insert(users)
@@ -18,6 +23,57 @@ export async function createUser(user: NewUser) {
   return result;
 }
 
+/**
+ * @description
+ * For modifying the stored email address of a given user.
+ * @param userId
+ * The ID of a given user.
+ * @param email
+ * The new email address.
+ * @returns
+ */
+export async function updateUserEmail(
+  userId: User['id'],
+  email: User['email']
+): Promise<User> {
+  const [result] = await db
+    .update(users)
+    .set({
+      email,
+    })
+    .where(eq(users.id, userId))
+    .returning();
+
+  return result;
+}
+
+/**
+ * @description
+ * For modifying the stored password of a given user.
+ * @param userId
+ * The ID of a given user.
+ * @param password
+ * The new password (it will automatically be hashed by this function).
+ * @returns
+ */
+export async function updateUserPassword(
+  userId: User['id'],
+  password: string
+): Promise<User> {
+  const hashedPassword = await hashPassword(password);
+  const [result] = await db
+    .update(users)
+    .set({ hashedPassword })
+    .where(eq(users.id, userId))
+    .returning();
+
+  return result;
+}
+
+/**
+ * @description
+ * For deleting all user records from the database.
+ */
 export async function deleteAllUsers() {
   await db.delete(users);
 }
