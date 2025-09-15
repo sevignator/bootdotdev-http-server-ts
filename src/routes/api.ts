@@ -20,6 +20,7 @@ import {
   deleteChirp,
   getAllChirps,
   getChirp,
+  getChirpsByUserId,
 } from '../db/queries/chirps.js';
 import {
   hashPassword,
@@ -34,7 +35,7 @@ import {
   getRefreshToken,
   revokeRefreshToken,
 } from '../db/queries/refreshTokens.js';
-import { type User } from '../db/schema.js';
+import { Chirp, type User } from '../db/schema.js';
 
 const router = Router();
 
@@ -179,13 +180,7 @@ router.get('/healthz', (req, res) => {
   res.send('OK');
 });
 
-router.get('/chirps', async (req, res) => {
-  const chirps = await getAllChirps();
-
-  res.status(200).json(chirps);
-});
-
-// For posting new chirps as an authenticated user.
+// For creating a new chirp as an authenticated user.
 router.post('/chirps', async (req, res) => {
   const MAX_LENGTH = 140;
   const ILLEGAL_TERMS = ['kerfuffle', 'sharbert', 'fornax'];
@@ -207,6 +202,24 @@ router.post('/chirps', async (req, res) => {
   );
 
   res.status(201).json(chirp);
+});
+
+// For reading chirps.
+router.get('/chirps', async (req, res) => {
+  const query: {
+    authorId?: User['id'];
+  } = req.query;
+  let chirps: Chirp[];
+
+  console.log({ authorId: query.authorId });
+
+  if (query.authorId) {
+    chirps = await getChirpsByUserId(query.authorId);
+  } else {
+    chirps = await getAllChirps();
+  }
+
+  res.status(200).json(chirps);
 });
 
 // For reading the content of a specific chirp.
