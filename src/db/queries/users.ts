@@ -100,3 +100,18 @@ export async function getUserFromRefreshToken(
 
   return result;
 }
+
+export async function updateUserChirpyRedStatus(
+  id: User['id'],
+  isChirpyRed: User['isChirpyRed']
+): Promise<User> {
+  const [result] = await db
+    .update(users)
+    .set({
+      isChirpyRed,
+    })
+    .where(eq(users.id, id))
+    .returning();
+
+  return result;
+}

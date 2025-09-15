@@ -5,7 +5,6 @@ import {
   createUser,
   getUserByEmail,
   getUserById,
-  getUserFromRefreshToken,
   updateUserEmail,
   updateUserPassword,
 } from '../db/queries/users.js';

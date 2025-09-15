@@ -1,5 +1,12 @@
 import { sql } from 'drizzle-orm';
-import { timestamp, varchar, uuid, pgTable, text } from 'drizzle-orm/pg-core';
+import {
+  timestamp,
+  varchar,
+  uuid,
+  pgTable,
+  text,
+  boolean,
+} from 'drizzle-orm/pg-core';
 
 export type NewUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -19,6 +26,7 @@ export const users = pgTable('users', {
     .notNull()
     .default('unset'),
   email: varchar('email', { length: 256 }).unique().notNull(),
+  isChirpyRed: boolean('is_chirpy_red').notNull().default(false),
 });
 
 export const chirps = pgTable('chirps', {

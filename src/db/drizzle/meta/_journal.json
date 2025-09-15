@@ -29,6 +29,13 @@
       "when": 1757785458369,
       "tag": "0003_great_wolfpack",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1757940197721,
+      "tag": "0004_abandoned_gladiator",
+      "breakpoints": true
     }
   ]
 }
