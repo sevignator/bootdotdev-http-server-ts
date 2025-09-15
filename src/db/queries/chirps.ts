@@ -1,6 +1,11 @@
-import { eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 import { db } from '../index.js';
 import { type User, type NewChirp, type Chirp, chirps } from '../schema.js';
+
+const sortingFns = {
+  asc,
+  desc,
+};
 
 export async function createChirp(
   body: NewChirp['body'],
@@ -29,18 +34,24 @@ export async function deleteChirp(id: Chirp['id']): Promise<Chirp> {
   return result;
 }
 
-export async function getChirpsByUserId(userId: User['id']): Promise<Chirp[]> {
+export async function getChirpsByUserId(
+  userId: User['id'],
+  sort: 'asc' | 'desc'
+): Promise<Chirp[]> {
   const result = await db
     .select()
     .from(chirps)
     .where(eq(chirps.userId, userId))
-    .orderBy(chirps.createdAt);
+    .orderBy(sortingFns[sort](chirps.createdAt));
 
   return result;
 }
 
-export async function getAllChirps(): Promise<Chirp[]> {
-  const result = await db.select().from(chirps).orderBy(chirps.createdAt);
+export async function getAllChirps(sort: 'asc' | 'desc'): Promise<Chirp[]> {
+  const result = await db
+    .select()
+    .from(chirps)
+    .orderBy(sortingFns[sort](chirps.createdAt));
 
   return result;
 }

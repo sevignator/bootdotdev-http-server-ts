@@ -212,15 +212,16 @@ router.post('/chirps', async (req, res) => {
 router.get('/chirps', async (req, res) => {
   const query: {
     authorId?: User['id'];
+    sort?: 'asc' | 'desc';
   } = req.query;
+  const userId = query.authorId;
+  const sort = query.sort ?? 'asc';
   let chirps: Chirp[];
 
-  console.log({ authorId: query.authorId });
-
-  if (query.authorId) {
-    chirps = await getChirpsByUserId(query.authorId);
+  if (userId) {
+    chirps = await getChirpsByUserId(userId, sort);
   } else {
-    chirps = await getAllChirps();
+    chirps = await getAllChirps(sort);
   }
 
   res.status(200).json(chirps);
