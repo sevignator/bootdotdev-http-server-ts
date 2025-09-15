@@ -28,6 +28,7 @@ import {
   makeJWT,
   validateJWT,
   makeRefreshToken,
+  getAPIKey,
 } from '../app/auth.js';
 import {
   getRefreshToken,
@@ -244,6 +245,14 @@ router.delete('/chirps/:chirpId', async (req, res) => {
 
 // For receiving payment processor webhooks.
 router.post('/polka/webhooks', async (req, res) => {
+  const apiKey = getAPIKey(req);
+
+  console.log({ apiKey, configKey: config.api.polkaKey });
+
+  if (apiKey !== config.api.polkaKey) {
+    throw new UnauthorizedError('The Polka API key is invalid.');
+  }
+
   const data: {
     event: string;
     data: {

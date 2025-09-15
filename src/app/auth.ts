@@ -64,3 +64,10 @@ export async function makeRefreshToken(userId: User['id']) {
 
   return token;
 }
+
+export function getAPIKey(req: Request) {
+  const authToken = req.get('Authorization');
+  const key = authToken?.replace('ApiKey', '').trim();
+
+  return key;
+}
