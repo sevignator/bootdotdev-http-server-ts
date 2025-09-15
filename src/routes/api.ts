@@ -5,6 +5,7 @@ import {
   createUser,
   getUserByEmail,
   getUserById,
+  updateUserChirpyRedStatus,
   updateUserEmail,
   updateUserPassword,
 } from '../db/queries/users.js';
@@ -237,6 +238,35 @@ router.delete('/chirps/:chirpId', async (req, res) => {
   }
 
   await deleteChirp(chirpId);
+
+  res.status(204).end();
+});
+
+// For receiving payment processor webhooks.
+router.post('/polka/webhooks', async (req, res) => {
+  const data: {
+    event: string;
+    data: {
+      userId: User['id'];
+    };
+  } = req.body;
+
+  // Exit early if the event is unrecognized.
+  if (data.event !== 'user.upgraded') {
+    res.status(204).end();
+  }
+
+  const user = await getUserById(data.data.userId);
+
+  // Throw a 404 if the user can't be found in the database.
+  if (!user) {
+    throw new NotFoundError(
+      `A user with the ID '${data.data.userId}' could not be found.`
+    );
+  }
+
+  // Set the user's Chirpy Red status to true.
+  await updateUserChirpyRedStatus(data.data.userId, true);
 
   res.status(204).end();
 });
