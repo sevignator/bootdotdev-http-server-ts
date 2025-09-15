@@ -33,6 +33,7 @@ export async function revokeRefreshToken(token: RefreshToken['token']) {
     .set({
       revokedAt: new Date(),
     })
+    .where(eq(refreshTokens.token, token))
     .returning();
 
   return result;

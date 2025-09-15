@@ -5,15 +5,22 @@ import {
   createUser,
   getUserByEmail,
   getUserById,
+  getUserFromRefreshToken,
   updateUserEmail,
   updateUserPassword,
 } from '../db/queries/users.js';
 import {
   BadRequestError,
+  ForbiddenError,
   NotFoundError,
   UnauthorizedError,
 } from '../app/errors.js';
-import { createChirp, getAllChirps, getChirp } from '../db/queries/chirps.js';
+import {
+  createChirp,
+  deleteChirp,
+  getAllChirps,
+  getChirp,
+} from '../db/queries/chirps.js';
 import {
   hashPassword,
   checkPasswordHash,
@@ -204,16 +211,35 @@ router.post('/chirps', async (req, res) => {
 // For reading the content of a specific chirp.
 router.get('/chirps/:chirpId', async (req, res) => {
   const chirpId = req.params.chirpId;
+  const chirp = await getChirp(chirpId);
 
-  try {
-    const chirp = await getChirp(chirpId);
-
-    res.status(200).json(chirp);
-  } catch {
+  if (!chirp) {
     throw new NotFoundError(
-      `A chirp with the ID "${chirpId}" could not be found.`
+      `A chirp with the ID '${chirpId}' could not be found.`
     );
   }
+
+  res.status(200).json(chirp);
+});
+
+// For deleting a specific chirp.
+router.delete('/chirps/:chirpId', async (req, res) => {
+  const token = getBearerToken(req);
+  const userId = validateJWT(token, config.api.jwtSecret);
+  const chirpId = req.params.chirpId;
+  const chirp = await getChirp(chirpId);
+
+  if (!chirp) {
+    throw new NotFoundError('This chirp could not be found.');
+  }
+
+  if (userId !== chirp.userId) {
+    throw new ForbiddenError('You are not allowed to delete this chirp.');
+  }
+
+  await deleteChirp(chirpId);
+
+  res.status(204).end();
 });
 
 export default router;
