@@ -18,11 +18,8 @@ const PORT = process.env.PORT || 8080;
 app.use(express.json());
 app.use(middlewareLogResponses);
 app.use('/app', middlewareMetricsInc, express.static('./src/app'));
-
 app.use('/api', apiRoutes);
 app.use('/admin', adminRoutes);
-
-// Error-handling middleware must be place after other middleware and routes.
 app.use(middlewareHandleErrors);
 
 app.listen(PORT, () => {
