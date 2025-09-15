@@ -32,6 +32,11 @@ export function middlewareMetricsInc(
   next();
 }
 
+/**
+ * @description
+ * Error-handing middleware. It must be placed after every other middleware and
+ * route handlers in order to apply.
+ */
 export function middlewareHandleErrors(
   err: Error,
   req: Request,

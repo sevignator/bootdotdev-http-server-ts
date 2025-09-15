@@ -4,6 +4,10 @@ import { config } from '../config.js';
 import { ForbiddenError } from '../app/errors.js';
 import { deleteAllUsers } from '../db/queries/users.js';
 
+/**
+ * @description
+ * Routes that begin with the `/admin` segment.
+ */
 const router = Router();
 
 router.post('/reset', async (req, res) => {

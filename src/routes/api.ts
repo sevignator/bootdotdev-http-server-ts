@@ -37,6 +37,10 @@ import {
 } from '../db/queries/refreshTokens.js';
 import { Chirp, type User } from '../db/schema.js';
 
+/**
+ * @description
+ * Routes that begin with the `/api` segment.
+ */
 const router = Router();
 
 // For creating a new user.
