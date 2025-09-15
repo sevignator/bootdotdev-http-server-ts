@@ -4,7 +4,9 @@ import { refreshTokens, type RefreshToken } from '../schema.js';
 import { User } from '../schema.js';
 import { eq } from 'drizzle-orm';
 
-export async function createRefreshToken(userId: User['id']) {
+export async function createRefreshToken(
+  userId: User['id']
+): Promise<RefreshToken> {
   const token = randomBytes(32).toString('hex');
 
   const [result] = await db
@@ -18,7 +20,9 @@ export async function createRefreshToken(userId: User['id']) {
   return result;
 }
 
-export async function getRefreshToken(token: RefreshToken['token']) {
+export async function getRefreshToken(
+  token: RefreshToken['token']
+): Promise<RefreshToken> {
   const [result] = await db
     .select()
     .from(refreshTokens)
@@ -27,7 +31,9 @@ export async function getRefreshToken(token: RefreshToken['token']) {
   return result;
 }
 
-export async function revokeRefreshToken(token: RefreshToken['token']) {
+export async function revokeRefreshToken(
+  token: RefreshToken['token']
+): Promise<RefreshToken> {
   const [result] = await db
     .update(refreshTokens)
     .set({

@@ -2,7 +2,10 @@ import { eq } from 'drizzle-orm';
 import { db } from '../index.js';
 import { type User, type NewChirp, type Chirp, chirps } from '../schema.js';
 
-export async function createChirp(body: NewChirp['body'], userId: User['id']) {
+export async function createChirp(
+  body: NewChirp['body'],
+  userId: User['id']
+): Promise<Chirp> {
   const [result] = await db
     .insert(chirps)
     .values({
@@ -14,13 +17,13 @@ export async function createChirp(body: NewChirp['body'], userId: User['id']) {
   return result;
 }
 
-export async function getChirp(id: Chirp['id']) {
+export async function getChirp(id: Chirp['id']): Promise<Chirp> {
   const [result] = await db.select().from(chirps).where(eq(chirps.id, id));
 
   return result;
 }
 
-export async function deleteChirp(id: Chirp['id']) {
+export async function deleteChirp(id: Chirp['id']): Promise<Chirp> {
   const [result] = await db.delete(chirps).where(eq(chirps.id, id)).returning();
 
   return result;

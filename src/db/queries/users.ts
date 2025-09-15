@@ -74,17 +74,17 @@ export async function updateUserPassword(
  * @description
  * For deleting all user records from the database.
  */
-export async function deleteAllUsers() {
+export async function deleteAllUsers(): Promise<void> {
   await db.delete(users);
 }
 
-export async function getUserById(id: User['id']) {
+export async function getUserById(id: User['id']): Promise<User> {
   const [result] = await db.select().from(users).where(eq(users.id, id));
 
   return result;
 }
 
-export async function getUserByEmail(email: User['email']) {
+export async function getUserByEmail(email: User['email']): Promise<User> {
   const [result] = await db.select().from(users).where(eq(users.email, email));
 
   return result;
